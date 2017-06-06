@@ -42,6 +42,11 @@ for suite in */; do
 	fi
 done
 
+wget -qO- "$snapshotUrl/dists/stable/Release" \
+	| tac|tac \
+	| awk -F ': ' '$1 == "Codename" { print $2; exit }' \
+	> latest
+
 declare -A experimentalSuites=(
 	[experimental]='unstable'
 	[rc-buggy]='sid'
