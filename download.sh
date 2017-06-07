@@ -42,10 +42,11 @@ for suite in */; do
 	fi
 done
 
-wget -qO- "$snapshotUrl/dists/stable/Release" \
-	| tac|tac \
+wget -qO- "$snapshotUrl/dists/stable/Release" 2>/dev/null \
 	| awk -F ': ' '$1 == "Codename" { print $2; exit }' \
-	> latest
+	> latest \
+	|| :
+[ -s latest ]
 
 declare -A experimentalSuites=(
 	[experimental]='unstable'
