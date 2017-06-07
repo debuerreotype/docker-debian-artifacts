@@ -33,7 +33,7 @@ for suite in */; do
 	cp -a "$suite/Dockerfile" "$suite/.dockerignore" "$suite/slim/"
 
 	# check whether xyz-backports exists at this epoch
-	if wget --quiet --spider "$snapshotUrl/dists/${suite}-backports/main/binary-$dpkgArch/Packages.gz"; then
+	if wget --quiet --spider "$snapshotUrl/dists/${suite}-backports/main/binary-$dpkgArch/Release"; then
 		mkdir -p "$suite/backports"
 		cat > "$suite/backports/Dockerfile" <<-EODF
 			FROM debian:$suite
@@ -41,12 +41,6 @@ for suite in */; do
 		EODF
 	fi
 done
-
-wget -qO- "$snapshotUrl/dists/stable/Release" 2>/dev/null \
-	| awk -F ': ' '$1 == "Codename" { print $2; exit }' \
-	> latest \
-	|| :
-[ -s latest ]
 
 declare -A experimentalSuites=(
 	[experimental]='unstable'
@@ -62,4 +56,11 @@ for suite in "${!experimentalSuites[@]}"; do
 			RUN echo 'deb http://deb.debian.org/debian $suite main' > /etc/apt/sources.list.d/experimental.list
 		EODF
 	fi
+done
+
+# add a bit of extra useful metadata per-suite
+for suite in */; do
+	suite="${suite%/}"
+	wget -O "$suite/Release" "$snapshotUrl/dists/$suite/Release"
+	echo "$suite" >> suites
 done
