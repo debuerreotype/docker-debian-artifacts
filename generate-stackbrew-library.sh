@@ -5,7 +5,7 @@ cd "$(dirname "$(readlink -f "$BASH_SOURCE")")"
 
 gitHubUrl='https://github.com/debuerreotype/docker-debian-artifacts'
 #rawGitUrl="$gitHubUrl/raw"
-rawGitUrl="${gitHubUrl//github.com/cdn.rawgit.com}"
+rawGitUrl="${gitHubUrl//github.com/cdn.rawgit.com}" # we grab a lot of tiny files, and rawgit's CDN is more consistently speedy on a cache hit than GitHub's
 
 archMaps=( $(
 	git ls-remote --heads "${gitHubUrl}.git" \
