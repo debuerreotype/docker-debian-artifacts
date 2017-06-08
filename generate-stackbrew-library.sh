@@ -4,6 +4,8 @@ set -e
 cd "$(dirname "$(readlink -f "$BASH_SOURCE")")"
 
 gitHubUrl='https://github.com/debuerreotype/docker-debian-artifacts'
+#rawGitUrl="$gitHubUrl/raw"
+rawGitUrl="${gitHubUrl//github.com/cdn.rawgit.com}"
 
 archMaps=( $(
 	git ls-remote --heads "${gitHubUrl}.git" \
@@ -42,7 +44,7 @@ for arch in "${arches[@]}"; do
 		${arch}-GitCommit: $commit
 	EOA
 
-	archSuites="$(wget -qO- "$gitHubUrl/raw/$commit/suites")"
+	archSuites="$(wget -qO- "$rawGitUrl/$commit/suites")"
 	for suite in $archSuites; do
 		if [ -z "${suiteArches[$suite]:-}" ]; then
 			suites+=( "$suite" )
@@ -50,7 +52,7 @@ for arch in "${arches[@]}"; do
 		suiteArches[$suite]+=" $arch"
 	done
 
-	archSerial="$(wget -qO- "$gitHubUrl/raw/$commit/serial")"
+	archSerial="$(wget -qO- "$rawGitUrl/$commit/serial")"
 	[ -n "$serial" ] || serial="$archSerial"
 	if [ "$serial" != "$archSerial" ]; then
 		echo >&2 "error: '$arch' has inconsistent serial '$serial'! (from '$archSerial')"
@@ -69,7 +71,7 @@ for version in "${suites[@]}"; do
 	versionArches=( ${suiteArches[$version]} )
 	tokenArch="${versionArches[0]}" # the arch we'll use to grab useful files like "$version/Release"
 	tokenCommit="${archCommits[$tokenArch]}"
-	tokenGitHubBase="$gitHubUrl/raw/$tokenCommit/$version"
+	tokenGitHubBase="$rawGitUrl/$tokenCommit/$version"
 
 	versionAliases=(
 		$version
@@ -115,7 +117,7 @@ for version in "${suites[@]}"; do
 		variantArches=()
 		for arch in "${versionArches[@]}"; do
 			archCommit="${archCommits[$arch]}"
-			if wget --quiet --spider "$gitHubUrl/raw/$archCommit/$variantDir/Dockerfile"; then
+			if wget --quiet --spider "$rawGitUrl/$archCommit/$variantDir/Dockerfile"; then
 				variantArches+=( "$arch" )
 			fi
 		done
