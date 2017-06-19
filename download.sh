@@ -58,9 +58,8 @@ for suite in "${!experimentalSuites[@]}"; do
 	fi
 done
 
-# add a bit of extra useful metadata per-suite
+# add a bit of extra useful metadata (for easier scraping)
 for suite in */; do
 	suite="${suite%/}"
-	wget -O "$suite/Release" "$snapshotUrl/dists/$suite/Release"
 	echo "$suite" >> suites
 done
