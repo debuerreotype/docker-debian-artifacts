@@ -12,6 +12,11 @@ rm -v artifacts.zip
 mv archive/* ./
 rmdir archive
 
+# remove "sbuild" tarballs
+# we don't use these in Docker, and as of 2017-09-07 unstable/testing are larger than GitHub's maximum file size of 100MB (~140MB)
+# they're still available in the Jenkins artifacts directly for folks who want them (and buildable reproducibly via debuerreotype)
+rm -r */sbuild/
+
 snapshotUrl="$(cat snapshot-url 2>/dev/null || echo 'https://deb.debian.org/debian')"
 dpkgArch="$(< dpkg-arch)"
 
