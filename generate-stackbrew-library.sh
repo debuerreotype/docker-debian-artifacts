@@ -127,9 +127,24 @@ for version in "${suites[@]}"; do
 		done
 		[ "${#variantArches[@]}" -gt 0 ] || continue
 
+		variantAliases=( "$version-$variant" )
+		case "$variant" in
+			slim)
+				for versionAlias in "${versionAliases[@]}"; do
+					case "$versionAlias" in
+						"$version"*) ;; # "stretch", "stretch-YYYYMMDD", etc
+						latest) ;;
+						*)
+							variantAliases+=( "$versionAlias-$variant" )
+							;;
+					esac
+				done
+				;;
+		esac
+
 		echo
 		cat <<-EOE
-			Tags: $version-$variant
+			Tags: $(join ', ' "${variantAliases[@]}")
 			Architectures: $(join ', ' "${variantArches[@]}")
 			Directory: $variantDir
 		EOE
