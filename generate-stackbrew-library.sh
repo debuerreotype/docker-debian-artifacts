@@ -24,6 +24,10 @@ done
 versions=( */ )
 versions=( "${versions[@]%/}" )
 
+_wget() {
+	wget -qO- -o /dev/null "$@"
+}
+
 cat <<-EOH
 # tarballs built by debuerreotype
 # see https://github.com/debuerreotype/debuerreotype
@@ -44,7 +48,7 @@ for arch in "${arches[@]}"; do
 		${arch}-GitCommit: $commit
 	EOA
 
-	archSuites="$(wget -qO- "$rawGitUrl/$commit/suites")"
+	archSuites="$(_wget "$rawGitUrl/$commit/suites")"
 	for suite in $archSuites; do
 		if [ -z "${suiteArches[$suite]:-}" ]; then
 			suites+=( "$suite" )
@@ -52,7 +56,7 @@ for arch in "${arches[@]}"; do
 		suiteArches[$suite]+=" $arch"
 	done
 
-	archSerial="$(wget -qO- "$rawGitUrl/$commit/serial")"
+	archSerial="$(_wget "$rawGitUrl/$commit/serial")"
 	[ -n "$serial" ] || serial="$archSerial"
 	if [ "$serial" != "$archSerial" ]; then
 		echo >&2 "error: '$arch' has inconsistent serial '$serial'! (from '$archSerial')"
@@ -78,7 +82,7 @@ for version in "${suites[@]}"; do
 		$version-$serial
 	)
 
-	releaseFile="$(wget -qO- "$tokenGitHubBase/Release")"
+	releaseFile="$(_wget "$tokenGitHubBase/Release")"
 	codename="$(echo "$releaseFile" | awk -F ': ' '$1 == "Codename" { print $2 }')"
 	if [ "$version" = "$codename" ]; then
 		# "jessie", "stretch", etc.
@@ -117,7 +121,7 @@ for version in "${suites[@]}"; do
 		variantArches=()
 		for arch in "${versionArches[@]}"; do
 			archCommit="${archCommits[$arch]}"
-			if wget --quiet --spider "$rawGitUrl/$archCommit/$variantDir/Dockerfile"; then
+			if _wget --spider "$rawGitUrl/$archCommit/$variantDir/Dockerfile"; then
 				variantArches+=( "$arch" )
 			fi
 		done
