@@ -1,0 +1,3 @@
+deb http://snapshot.debian.org/archive/debian/20180213T000000Z buster main
+deb http://snapshot.debian.org/archive/debian/20180213T000000Z buster-updates main
+deb http://snapshot.debian.org/archive/debian-security/20180213T000000Z buster/updates main

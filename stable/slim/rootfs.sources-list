@@ -1,0 +1,3 @@
+deb http://deb.debian.org/debian stable main
+deb http://deb.debian.org/debian stable-updates main
+deb http://security.debian.org stable/updates main
