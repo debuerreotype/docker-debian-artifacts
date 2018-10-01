@@ -127,18 +127,20 @@ for version in "${suites[@]}"; do
 		done
 		[ "${#variantArches[@]}" -gt 0 ] || continue
 
-		variantAliases=( "$version-$variant" )
+		variantAliases=()
 		case "$variant" in
 			slim)
 				for versionAlias in "${versionAliases[@]}"; do
 					case "$versionAlias" in
-						"$version"*) ;; # "stretch", "stretch-YYYYMMDD", etc
 						latest) ;;
 						*)
 							variantAliases+=( "$versionAlias-$variant" )
 							;;
 					esac
 				done
+				;;
+			*)
+				variantAliases+=( "$version-$variant" )
 				;;
 		esac
 
