@@ -72,7 +72,7 @@ join() {
 
 for version in "${suites[@]}"; do
 	versionArches=( ${suiteArches[$version]} )
-	tokenArch="${versionArches[0]}" # the arch we'll use to grab useful files like "$version/Release"
+	tokenArch="${versionArches[0]}" # the arch we'll use to grab useful files like "$version/InRelease"
 	tokenCommit="${archCommits[$tokenArch]}"
 	tokenGitHubBase="$rawGitUrl/$tokenCommit/$version"
 
@@ -81,12 +81,12 @@ for version in "${suites[@]}"; do
 		$version-$serial
 	)
 
-	releaseFile="$(_wget "$tokenGitHubBase/Release")"
-	codename="$(echo "$releaseFile" | awk -F ': ' '$1 == "Codename" { print $2 }')"
+	releaseFile="$(_wget "$tokenGitHubBase/InRelease" || _wget "$tokenGitHubBase/Release")"
+	codename="$(awk -F ': ' '$1 == "Codename" { print $2; exit }' <<<"$releaseFile")"
 	if [ "$version" = "$codename" ]; then
 		# "jessie", "stretch", etc.
 
-		releaseVersion="$(echo "$releaseFile" | awk -F ': ' '$1 == "Version" { print $2 }')"
+		releaseVersion="$(awk -F ': ' '$1 == "Version" { print $2; exit }' <<<"$releaseFile")"
 		if [ -n "$releaseVersion" ]; then
 			while [ "${releaseVersion%.*}" != "$releaseVersion" ]; do
 				versionAliases+=( "$releaseVersion" )
@@ -95,13 +95,13 @@ for version in "${suites[@]}"; do
 			versionAliases+=( "$releaseVersion" )
 		fi
 
-		suite="$(echo "$releaseFile" | awk -F ': ' '$1 == "Suite" { print $2 }')"
+		suite="$(awk -F ': ' '$1 == "Suite" { print $2; exit }' <<<"$releaseFile")"
 		if [ "$suite" = 'stable' ]; then
 			# latest should always point to current stable
 			versionAliases+=( latest )
 		fi
 	fi
-	description="$(echo "$releaseFile" | awk -F ': ' '$1 == "Description" { print $2 }')"
+	description="$(awk -F ': ' '$1 == "Description" { print $2; exit }' <<<"$releaseFile")"
 
 	echo
 	cat <<-EOE
