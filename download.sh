@@ -17,6 +17,9 @@ rmdir archive
 # they're still available in the Jenkins artifacts directly for folks who want them (and buildable reproducibly via debuerreotype)
 rm -r */sbuild/
 
+# remove empty files (temporary fix for https://github.com/debuerreotype/debuerreotype/commit/d29dd5e030525d9a5d9bd925030d1c11a163380c)
+find */ -type f -empty -delete
+
 snapshotUrl="$(cat snapshot-url 2>/dev/null || echo 'https://deb.debian.org/debian')"
 dpkgArch="$(< dpkg-arch)"
 
