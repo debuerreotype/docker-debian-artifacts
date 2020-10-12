@@ -45,10 +45,11 @@ for suite in */; do
 			RUN echo 'deb http://deb.debian.org/debian ${suite}-backports main' > /etc/apt/sources.list.d/backports.list
 		EODF
 		if ! wget -O "$suite/backports/InRelease" "$snapshotUrl/dists/${suite}-backports/InRelease"; then
-			# TODO extract InRelease contents somehow (no keyring here)
+			rm -f "$suite/backports/InRelease" # delete the empty file "wget" creates
 			wget -O "$suite/backports/Release" "$snapshotUrl/dists/${suite}-backports/Release"
 			wget -O "$suite/backports/Release.gpg" "$snapshotUrl/dists/${suite}-backports/Release.gpg"
 		fi
+		# TODO else extract InRelease contents somehow (no keyring here)
 	fi
 done
 
@@ -66,10 +67,11 @@ for suite in "${!experimentalSuites[@]}"; do
 			RUN echo 'deb http://deb.debian.org/debian $suite main' > /etc/apt/sources.list.d/experimental.list
 		EODF
 		if ! wget -O "$suite/InRelease" "$snapshotUrl/dists/$suite/InRelease"; then
-			# TODO extract InRelease contents somehow (no keyring here)
+			rm -f "$suite/InRelease" # delete the empty file "wget" creates
 			wget -O "$suite/Release" "$snapshotUrl/dists/$suite/Release"
 			wget -O "$suite/Release.gpg" "$snapshotUrl/dists/$suite/Release.gpg"
 		fi
+		# TODO else extract InRelease contents somehow (no keyring here)
 	fi
 done
 
