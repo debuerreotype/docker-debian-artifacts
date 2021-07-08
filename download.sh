@@ -64,17 +64,24 @@ for suite in "${!experimentalSuites[@]}"; do
 	base="${experimentalSuites[$suite]}"
 	if [ -f "$base/rootfs.tar.xz" ]; then
 		[ ! -d "$suite" ]
+		[ -s "$base/rootfs.sources-list" ]
+		mirror="$(awk '$1 == "deb" { print $2; exit }' "$base/rootfs.sources-list")"
+		[ -n "$mirror" ]
 		mkdir -p "$suite"
-		cat > "$suite/Dockerfile" <<-EODF
-			FROM debian:$base
-			RUN echo 'deb http://deb.debian.org/debian $suite main' > /etc/apt/sources.list.d/experimental.list
-		EODF
 		if ! wget -O "$suite/InRelease" "$snapshotUrl/dists/$suite/InRelease"; then
 			rm -f "$suite/InRelease" # delete the empty file "wget" creates
-			wget -O "$suite/Release" "$snapshotUrl/dists/$suite/Release"
-			wget -O "$suite/Release.gpg" "$snapshotUrl/dists/$suite/Release.gpg"
-		fi
-		# TODO else extract InRelease contents somehow (no keyring here)
+			if ! {
+				wget -O "$suite/Release.gpg" "$snapshotUrl/dists/$suite/Release.gpg" &&
+				wget -O "$suite/Release" "$snapshotUrl/dists/$suite/Release"
+			}; then
+				rm -rf "$suite"
+				continue # this suite must not exist! (rc-buggy on debian-ports 😔)
+			fi
+		fi # TODO else extract InRelease contents somehow (no keyring here)
+		cat > "$suite/Dockerfile" <<-EODF
+			FROM debian:$base
+			RUN echo 'deb $mirror $suite main' > /etc/apt/sources.list.d/experimental.list
+		EODF
 	fi
 done
 
