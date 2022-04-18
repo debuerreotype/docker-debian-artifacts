@@ -32,6 +32,8 @@ for suite in */; do
 		ADD rootfs.tar.xz /
 		CMD ["bash"]
 	EODF
+	# TODO cleverly detect whether "bash" exists in "rootfs.tar.xz" (and fall back to "sh" if not)
+	# https://salsa.debian.org/debian/grow-your-ideas/-/issues/20
 	cat > "$suite/.dockerignore" <<-'EODI'
 		**
 		!rootfs.tar.xz
