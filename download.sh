@@ -66,8 +66,8 @@ for suite in "${!experimentalSuites[@]}"; do
 	base="${experimentalSuites[$suite]}"
 	if [ -f "$base/rootfs.tar.xz" ]; then
 		[ ! -d "$suite" ]
-		[ -s "$base/rootfs.sources-list" ]
-		mirror="$(awk '$1 == "deb" { print $2; exit }' "$base/rootfs.sources-list")"
+		[ -s "$base/rootfs.debian-sources" ]
+		mirror="$(awk '$1 == "URIs:" { print $2; exit }' "$base/rootfs.debian-sources")"
 		[ -n "$mirror" ]
 		mkdir -p "$suite"
 		if ! wget -O "$suite/InRelease" "$snapshotUrl/dists/$suite/InRelease"; then
