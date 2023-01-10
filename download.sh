@@ -56,6 +56,9 @@ for suite in */; do
 		fi
 		# TODO else extract InRelease contents somehow (no keyring here)
 	fi
+
+	# TODO https://github.com/debuerreotype/docker-debian-artifacts/pull/186
+	rm -f "$suite/oci.tar" "$suite/slim/oci.tar"
 done
 
 declare -A experimentalSuites=(
