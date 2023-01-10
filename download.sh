@@ -12,35 +12,40 @@ rm -v artifacts.zip
 mv archive/* ./
 rmdir archive
 
-# remove "sbuild" tarballs
-# we don't use these in Docker, and as of 2017-09-07 unstable/testing are larger than GitHub's maximum file size of 100MB (~140MB)
-# they're still available in the Jenkins artifacts directly for folks who want them (and buildable reproducibly via debuerreotype)
-rm -rf */sbuild/
-
-# remove empty files (temporary fix for https://github.com/debuerreotype/debuerreotype/commit/d29dd5e030525d9a5d9bd925030d1c11a163380c)
-find */ -type f -empty -delete
-
 snapshotUrl="$(cat snapshot-url 2>/dev/null || echo 'https://deb.debian.org/debian')"
 dpkgArch="$(< dpkg-arch)"
 
 for suite in */; do
 	suite="${suite%/}"
 
-	[ -f "$suite/rootfs.tar.xz" ]
-	cat > "$suite/Dockerfile" <<-'EODF'
-		FROM scratch
-		ADD rootfs.tar.xz /
-		CMD ["bash"]
-	EODF
-	# TODO cleverly detect whether "bash" exists in "rootfs.tar.xz" (and fall back to "sh" if not)
-	# https://salsa.debian.org/debian/grow-your-ideas/-/issues/20
-	cat > "$suite/.dockerignore" <<-'EODI'
-		**
-		!rootfs.tar.xz
-	EODI
+	for variant in '' slim; do
+		dir="$suite${variant:+/$variant}"
+		[ -d "$dir" ]
+		[ -s "$dir/oci.tar" ]
 
-	[ -f "$suite/slim/rootfs.tar.xz" ]
-	cp -a "$suite/Dockerfile" "$suite/.dockerignore" "$suite/slim/"
+		mkdir "$dir/oci"
+		tar -xf "$dir/oci.tar" -C "$dir/oci"
+		rm -f "$dir/oci.tar" "$dir/rootfs.tar.xz"
+		rootfs='oci/blobs/rootfs.tar.gz'
+
+		[ -s "$dir/$rootfs" ]
+
+		cmd="$(jq -c '.config.Cmd' "$dir/oci/blobs/image-config.json")"
+		[[ "$cmd" = '["'*'"]' ]]
+
+		cat > "$dir/Dockerfile" <<-EODF
+			# this isn't used for the official published images anymore, but is included for backwards compatibility
+			# see https://github.com/docker-library/bashbrew/issues/51
+			FROM scratch
+			ADD $rootfs /
+			CMD $cmd
+		EODF
+
+		cat > "$dir/.dockerignore" <<-EODI
+			**
+			!$rootfs
+		EODI
+	done
 
 	# check whether xyz-backports exists at this epoch
 	if wget --quiet --spider "$snapshotUrl/dists/${suite}-backports/main/binary-$dpkgArch/Release"; then
@@ -56,9 +61,6 @@ for suite in */; do
 		fi
 		# TODO else extract InRelease contents somehow (no keyring here)
 	fi
-
-	# TODO https://github.com/debuerreotype/docker-debian-artifacts/pull/186
-	rm -f "$suite/oci.tar" "$suite/slim/oci.tar"
 done
 
 declare -A experimentalSuites=(
@@ -67,7 +69,7 @@ declare -A experimentalSuites=(
 )
 for suite in "${!experimentalSuites[@]}"; do
 	base="${experimentalSuites[$suite]}"
-	if [ -f "$base/rootfs.tar.xz" ]; then
+	if [ -s "$base/Dockerfile" ]; then
 		[ ! -d "$suite" ]
 		[ -s "$base/rootfs.debian-sources" ]
 		mirror="$(awk '$1 == "URIs:" { print $2; exit }' "$base/rootfs.debian-sources")"
