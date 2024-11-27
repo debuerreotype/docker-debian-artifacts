@@ -103,31 +103,38 @@ for version in "${suites[@]}"; do
 	fi
 	description="$(awk -F ': ' '$1 == "Description" { print $2; exit }' <<<"$releaseFile")"
 
-	echo
-	cat <<-EOE
-		# $version -- $description
-		Tags: $(join ', ' "${versionAliases[@]}")
-		Architectures: $(join ', ' "${versionArches[@]}")
-		Directory: $version
-	EOE
-
 	for variant in \
+		'' \
 		backports \
 		slim \
 	; do
-		variantDir="$version/$variant"
+		variantDir="$version${variant:+/$variant}"
 
+		ociOrDockerfile= # 'oci' or 'Dockerfile'
 		variantArches=()
 		for arch in "${versionArches[@]}"; do
 			archCommit="${archCommits[$arch]}"
-			if _wget --spider "$rawGitUrl/$archCommit/$variantDir/Dockerfile"; then
+			archOciOrDockerfile=
+			if _wget --spider "$rawGitUrl/$archCommit/$variantDir/oci/index.json"; then
+				archOciOrDockerfile='oci'
 				variantArches+=( "$arch" )
+			elif _wget --spider "$rawGitUrl/$archCommit/$variantDir/Dockerfile"; then
+				archOciOrDockerfile='Dockerfile'
+				variantArches+=( "$arch" )
+			fi
+			: "${ociOrDockerfile:="$archOciOrDockerfile"}"
+			if [ "$archOciOrDockerfile" != "$ociOrDockerfile" ]; then
+				echo >&2 "error: '$arch' has a mismatching layout for '$variantDir' from '${variantArches[0]}' ('$archOciOrDockerfile' vs '$ociOrDockerfile')"
+				exit 1
 			fi
 		done
 		[ "${#variantArches[@]}" -gt 0 ] || continue
 
 		variantAliases=()
 		case "$variant" in
+			'')
+				variantAliases+=( "${versionAliases[@]}" )
+				;;
 			slim)
 				for versionAlias in "${versionAliases[@]}"; do
 					case "$versionAlias" in
@@ -144,10 +151,26 @@ for version in "${suites[@]}"; do
 		esac
 
 		echo
+		if [ -z "$variant" ]; then
+			echo "# $version -- $description"
+		fi
 		cat <<-EOE
 			Tags: $(join ', ' "${variantAliases[@]}")
 			Architectures: $(join ', ' "${variantArches[@]}")
-			Directory: $variantDir
 		EOE
+		if [ "$ociOrDockerfile" = 'oci' ]; then
+			cat <<-EOE
+				Builder: oci-import
+				Directory: $variantDir/oci
+				File: index.json
+			EOE
+		elif [ "$ociOrDockerfile" = 'Dockerfile' ]; then
+			cat <<-EOE
+				Directory: $variantDir
+			EOE
+		else
+			echo >&2 "error: unknown 'ociOrDockerfile' value: '$ociOrDockerfile'"
+			exit 1
+		fi
 	done
 done
