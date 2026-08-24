@@ -1,0 +1,11 @@
+Types: deb
+URIs: http://snapshot.debian.org/archive/debian/20260824T000000Z
+Suites: forky forky-updates
+Components: main
+Signed-By: /usr/share/keyrings/debian-archive-keyring.pgp
+
+Types: deb
+URIs: http://snapshot.debian.org/archive/debian-security/20260824T000000Z
+Suites: forky-security
+Components: main
+Signed-By: /usr/share/keyrings/debian-archive-keyring.pgp
