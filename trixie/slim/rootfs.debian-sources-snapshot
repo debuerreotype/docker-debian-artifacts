@@ -1,0 +1,11 @@
+Types: deb
+URIs: http://snapshot.debian.org/archive/debian/20261020T213255Z
+Suites: trixie trixie-updates
+Components: main
+Signed-By: /usr/share/keyrings/debian-archive-keyring.pgp
+
+Types: deb
+URIs: http://snapshot.debian.org/archive/debian-security/20261020T213255Z
+Suites: trixie-security
+Components: main
+Signed-By: /usr/share/keyrings/debian-archive-keyring.pgp
